@@ -3,8 +3,7 @@
 A two-hour, hands-on introduction to spatial omics for immunologists, run at the
 ASI-FIMSA meeting. Everything happens in your browser through Google Colab — there is
 nothing to install, and you do not need to be a Python programmer. We look at **one
-tissue, breast cancer, through three different technologies**, so that every difference
-you see on screen comes from the technology rather than from the sample. You will read
+tissue, breast cancer, through three different technologies**. You will read
 and plot the data yourself, find the tissue niches that make up a tumour
 microenvironment, and finish by training a small Vision Transformer that predicts gene
 expression straight from an H&E image. Four Tutorials, each self-contained, each a
