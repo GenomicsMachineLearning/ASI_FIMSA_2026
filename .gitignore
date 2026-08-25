@@ -1,0 +1,40 @@
+# --- Executed notebook output ------------------------------------------------
+# Notebooks themselves ARE tracked. What running them produces is not.
+verify/out/
+test_output/
+.ipynb_checkpoints/
+
+# --- Python ------------------------------------------------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# --- Virtual environments ----------------------------------------------------
+.venv/
+venv/
+env/
+.conda/
+
+# --- Downloaded and staged data ----------------------------------------------
+# Staged datasets and anything a Tutorial or prep script fetches or writes.
+data/
+*.zarr
+*.zarr.zip
+*.h5ad
+*.h5
+*.tif
+*.tiff
+
+# --- Slurm logs (prep scripts on Bunya) --------------------------------------
+runs/*.out
+runs/*.err
+
+# --- OS / editor -------------------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# stray downloads from running notebooks in place (harness now uses a scratch workdir)
+notebooks/visium/
+notebooks/data/

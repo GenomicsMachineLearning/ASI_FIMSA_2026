@@ -1,0 +1,232 @@
+# ASI-FIMSA Workshop 2026 -- pin set for Google Colab
+# ===================================================
+# Verified 2026-08-25 on Python 3.12.9 (Bunya, venv at
+# /scratch/project_mnt/S0010/Xiao/envs/colab312) against the Colab 2026.07
+# runtime profile: Python 3.12.13, numpy 2.0.2, torch 2.11.0 preinstalled.
+#
+# HOW THIS FILE IS USED
+# ---------------------
+# This is a pip *constraints* file, not a requirements file. It never installs
+# anything by itself: it only says "if this package is pulled in, it must be
+# exactly this version". Every Tutorial install passes it with `-c`, so all four
+# notebooks land on one tested resolution while each installs only what it needs:
+#
+#   00_setup_check        -c constraints-colab.txt -r requirements-colab.txt
+#   01_read_and_visualise -c constraints-colab.txt spatialdata spatialdata-io spatialdata-plot scanpy igraph
+#   02_niche_analysis     -c constraints-colab.txt squidpy sopa scanpy seaborn netgraph
+#   02b_cell_cell_interaction -c constraints-colab.txt scanpy seaborn bokeh leidenalg
+#                             followed by:  --no-deps stlearn   (see below, and ADR-0004)
+#   03_vit_gene_expression -c constraints-colab.txt scanpy
+#
+# Tutorial 3 deliberately installs scanpy ONLY. Its ViT runs on torch, PIL,
+# scikit-learn and scipy, all of which Colab preinstalls, so it must not pay for
+# the spatialdata stack.
+#
+# TORCH IS NOT LISTED ANYWHERE IN THIS PIN SET
+# --------------------------------------------
+# Colab preinstalls torch 2.11.0 with a CUDA build matched to its own driver.
+# Naming torch in a requirements or constraints file makes pip re-resolve it and
+# can pull a ~2.5 GB wheel set that then fails to see the GPU. Tutorial 3 uses
+# whatever torch Colab shipped. The local verification venv installs
+# torch==2.11.0+cpu separately, outside this file, only so notebooks can be
+# executed headlessly.
+#
+# THE FOUR SPATIALDATA-FAMILY VERSIONS MOVE TOGETHER (ADR-0003)
+# -------------------------------------------------------------
+# spatialdata / spatialdata-io / spatialdata-plot / squidpy -- plus sopa, which
+# gates on spatialdata>=0.7.3 -- are a single unit. Mixing majors across them is
+# the exact failure this pin set exists to prevent. If one is bumped, re-resolve
+# and re-verify all five together and update the "Verified" date above. Do not
+# bump one in isolation to chase a bug.
+#
+# THE numpy==2.0.2 HOLD IS THE POINT
+# ----------------------------------
+# Colab preinstalls numpy 2.0.2 and imports it before the first cell runs. If any
+# pin forces numpy above 2.0.2, pip swaps the files under a module that is
+# already in memory and Colab demands a mid-session kernel restart -- for a room
+# of immunologists, halfway through a Tutorial. 2.0.2 is therefore pinned
+# exactly, and the whole stack below was resolved against it. It holds: nothing
+# in the workshop stack requires numpy > 2.0.2. The binding floor is
+# `scanpy 1.12.3: numpy>=2`, which 2.0.2 satisfies.
+#
+# stlearn IS INSTALLED WITH --no-deps, AND IS NOT PINNED HERE (ADR-0004)
+# ---------------------------------------------------------------------
+# stlearn 1.4.1 declares `numpy>=2.4.0`. That floor is incompatible with the hold
+# above, and no stlearn release escapes it: 1.3.0 requires numpy<2.0, 1.2.2
+# requires scikit-image<0.23, and 1.1.x pins scipy==1.11.4. Since the numpy hold
+# exists to protect a room of Participants from a mid-Tutorial kernel restart, it
+# wins, and 02b installs stlearn with `--no-deps` instead:
+#
+#   pip install -q -c constraints-colab.txt scanpy seaborn bokeh leidenalg
+#   pip install -q --no-deps stlearn
+#
+# This is safe to do here and nowhere else because stlearn is a 217 KB pure-Python
+# wheel (stlearn-1.4.1-py3-none-any.whl) whose every eagerly-imported third party
+# is already in this pin set except two -- bokeh and leidenalg -- which are
+# therefore requested explicitly above and pinned in Section A below. plotly,
+# rpy2 and IPython are imported inside functions only, and torch/torchvision are
+# needed solely by stlearn.image_preprocessing, which 02b never touches.
+#
+# The cost is real and bounded: `--no-deps` overrides a declared incompatibility,
+# so stlearn is only known to work along the paths 02b actually executes, and
+# those are the paths verify/run_notebooks.sh runs end to end. If a future stlearn
+# genuinely needs a numpy 2.4 API, the documented fallback is a second pin set at
+# numpy==2.5.2 for that notebook alone, plus 00_setup_check's restart banner.
+#
+# DO NOT add `stlearn` to this file. A constraint on a package installed with
+# --no-deps is never consulted, so a pin here would be inert and would read as a
+# guarantee this file cannot make.
+
+# TWO TIERS, ON PURPOSE
+# ---------------------
+# Section A pins exactly. These are packages Colab does not ship, or ships in a
+# version the stack rejects, so they are installed either way and an exact pin
+# costs nothing.
+# Section B is floors only, with the tested version recorded in a comment. These
+# are packages Colab already ships. Pinning them exactly would force pip to
+# re-download and replace a working preinstalled copy -- minutes of install time
+# and, for anything Colab has already imported, the same stale-module restart
+# that the numpy hold exists to avoid. The floors below are the real declared
+# requirements of the stack, so correctness is unchanged.
+
+# ---------------------------------------------------------------------------
+# Section A -- exact pins (not preinstalled on Colab, or must be replaced)
+# ---------------------------------------------------------------------------
+
+# The numpy hold. Read the note above before touching this line.
+numpy==2.0.2
+
+# The spatialdata family + sopa + scanpy. Bump as one unit (ADR-0003).
+spatialdata==0.8.0
+spatialdata-io==0.7.1
+spatialdata-plot==0.4.1
+squidpy==1.8.3
+sopa==2.2.10
+scanpy==1.12.3
+
+# scverse core
+anndata==0.12.19
+fast-array-utils==1.5
+legacy-api-wrap==1.5
+session-info2==0.4.2
+array-api-compat==1.15.0
+natsort==8.4.0
+
+# Zarr / OME stack. spatialdata 0.8 requires zarr>=3.0.0; Colab ships zarr 2.x
+# or nothing, so zarr 3 is always a real install. ome-zarr 0.18 is the first
+# release that reads what spatialdata 0.8 writes.
+zarr==3.3.0
+numcodecs==0.16.5
+pydantic-zarr==0.10.0
+ome-zarr==0.18.0
+ome-zarr-models==1.7
+ome-types==0.6.3
+xsdata==26.2
+xmltodict==1.0.4
+
+# xarray / multiscale image models
+xarray==2026.7.0
+xarray-dataclass==3.0.0
+xarray-spatial==0.10.17
+spatial-image==1.2.3
+multiscale-spatial-image==2.0.3
+datashader==0.19.1
+
+# Dask. spatialdata 0.8 requires dask>=2026.3.0 -- newer than anything Colab
+# ships, so this is always installed fresh and is the largest single cost in
+# the Tutorial 1 and 2 installs.
+dask==2026.8.0
+distributed==2026.8.0
+dask-image==2026.5.0
+fsspec==2026.7.0
+universal-pathlib==0.3.10
+toolz==1.1.0
+partd==1.4.2
+locket==1.0.0
+cloudpickle==3.1.2
+msgpack==1.2.1
+zict==3.0.0
+tblib==3.2.2
+sortedcontainers==2.4.0
+
+# Geometry. spatialdata represents cell boundaries as GeoPandas geometries.
+geopandas==1.1.4
+shapely==2.1.2
+pyogrio==0.13.0
+pyproj==3.7.2
+
+# Image I/O. imagecodecs is the one entry here with an upper bound in the
+# stack itself: squidpy 1.8.3 requires imagecodecs>=2025.8.2,<2026, so the
+# 2026.x releases are NOT usable and this pin must stay below them.
+imagecodecs==2025.11.11
+tifffile==2026.4.11
+pims==0.7
+slicerator==1.1.0
+
+# Graph / embedding
+igraph==1.0.0
+pynndescent==0.6.0
+umap-learn==0.5.12
+
+# squidpy leaf dependencies
+omnipath==1.0.12
+validators==0.35.0
+docrep==0.3.2
+matplotlib-scalebar==0.9.0
+
+# sopa leaf dependencies
+typer==0.27.1
+typeguard==4.6.0
+pydantic==2.12.5
+pydantic-core==2.41.5
+
+# stlearn's two eager imports that nothing else in the stack provides. Requested
+# explicitly because stlearn itself is installed with --no-deps and so pulls in
+# nothing of its own. bokeh backs stlearn.pl's *_interactive plots, which are
+# imported by stlearn/pl/__init__.py whether or not a Tutorial calls them;
+# leidenalg backs stlearn.tl.clustering.leiden, imported the same way.
+bokeh==3.10.0
+xyzservices==2026.3.0
+narwhals==2.25.0
+tornado==6.5.8
+leidenalg==0.12.0
+texttable==1.7.0
+
+# netgraph -- needed by sopa.spatial.prepare_network in Tutorial 2, and NOT a
+# sopa dependency. Installing sopa alone leaves prepare_network unusable, so
+# netgraph must be named explicitly wherever prepare_network is called.
+netgraph==4.13.2
+rectangle-packer==2.1.0
+grandalf==0.8
+
+# Data fetching for Staged datasets
+huggingface-hub==1.28.0
+hf-xet==1.6.0
+gdown==6.1.0
+
+# ---------------------------------------------------------------------------
+# Section B -- floors only (Colab preinstalls these; do not force an upgrade)
+# ---------------------------------------------------------------------------
+# Format: floor    # tested <version>  <-- who sets the floor
+#
+# pandas is the one entry here that Colab is likely to have to upgrade:
+# scanpy 1.12.3 requires pandas>=2.3, and Colab 2026.07 ships 2.2.x. That
+# upgrade is unavoidable and is included in the measured install time.
+
+scipy>=1.13            # tested 1.18.1   <-- scanpy>=1.13
+pandas>=2.3            # tested 2.3.3    <-- scanpy>=2.3  (forces a Colab upgrade)
+matplotlib>=3.10       # tested 3.11.1   <-- scanpy>=3.10
+scikit-learn>=1.6      # tested 1.9.0    <-- scanpy>=1.6
+scikit-image>=0.25     # tested 0.26.0   <-- squidpy>=0.25
+pillow>=8              # tested 12.3.0   <-- squidpy>=8
+networkx>=2.8.8        # tested 3.6.1    <-- scanpy>=2.8.8
+seaborn>=0.13.2        # tested 0.13.2   <-- scanpy>=0.13.2
+numba>=0.60            # tested 0.67.0   <-- scanpy>=0.60
+h5py>=3.11             # tested 3.16.0   <-- scanpy>=3.11
+statsmodels>=0.13      # tested 0.14.6   <-- scanpy
+joblib>=1.2            # tested 1.5.3    <-- scanpy
+tqdm>=4.50.2           # tested 4.70.0   <-- squidpy>=4.50.2
+requests>=2.28         # tested 2.34.2   <-- datashader, ome-zarr
+pyarrow>=14            # tested 25.0.1   <-- spatialdata (parquet cell tables)
+imageio>=2.37          # tested 2.37.4   <-- scikit-image, stlearn
+click>=8.2             # tested 8.4.2    <-- typer (sopa), stlearn

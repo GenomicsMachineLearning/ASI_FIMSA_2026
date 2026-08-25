@@ -1,0 +1,76 @@
+# ASI-FIMSA Workshop 2026 -- the union install set for Google Colab
+# =================================================================
+# Verified 2026-08-25 against the Colab 2026.07 runtime profile
+# (Python 3.12.13, numpy 2.0.2, torch 2.11.0 preinstalled), and re-verified
+# locally on Python 3.12.9 in /scratch/project_mnt/S0010/Xiao/envs/colab312.
+#
+#   pip install -c constraints-colab.txt -r requirements-colab.txt
+#
+# This is the EVERYTHING set. Only 00_setup_check installs it, because that
+# notebook's whole job is to prove the full stack resolves in a participant's
+# own Colab session before the Workshop. The three Tutorials each install a
+# subset -- see the install lines listed in constraints-colab.txt -- so that,
+# for example, 03_vit_gene_expression pays for scanpy alone.
+#
+# Every version lives in constraints-colab.txt, including the transitives that
+# actually decide whether this stack works (anndata, zarr 3.x, dask >=2026.3,
+# imagecodecs <2026, scikit-image). This file names only what we ask for.
+# The `-c` line below is what binds the two together; without it, pip is free
+# to pick a different resolution and the tested set means nothing.
+#
+# One package is NOT here and cannot be: stlearn, which Tutorial 02b installs with
+# `--no-deps` because its declared `numpy>=2.4.0` collides with the Colab numpy
+# hold. A `-r` install has no way to express --no-deps, so stlearn lives in its own
+# one-line file, requirements-colab-stlearn.txt. See ADR-0004.
+-c constraints-colab.txt
+
+# --- torch is deliberately ABSENT -------------------------------------------
+# Colab preinstalls torch 2.11.0, built against its own CUDA driver. Naming
+# torch here makes pip re-resolve it, which at best wastes minutes on a ~2.5 GB
+# wheel set and at worst installs a build that cannot see the GPU. Tutorial 3
+# uses the torch Colab already shipped. The local verification venv installs
+# torch==2.11.0+cpu via verify/requirements-verify.txt instead.
+
+# --- already on Colab, so not requested here either --------------------------
+# scipy, pandas, matplotlib, scikit-learn, scikit-image, pillow, networkx,
+# requests, tqdm, joblib, h5py, numba, ipykernel, jupyter-core. They arrive as
+# dependencies of the packages below and are held to floors, not exact pins,
+# by Section B of constraints-colab.txt so the preinstalled copies survive.
+# The single unavoidable upgrade is pandas: scanpy 1.12.3 requires >=2.3 and
+# Colab 2026.07 ships 2.2.x.
+
+# --- the spatialdata family (bump as one unit -- ADR-0003) -------------------
+spatialdata
+spatialdata-io
+spatialdata-plot
+squidpy
+sopa
+scanpy
+
+# --- Tutorial 2 needs netgraph, which sopa does NOT depend on ----------------
+# sopa.spatial.prepare_network imports netgraph at call time. Installing sopa
+# alone leaves that function raising ImportError, so it is requested here and
+# in the 02_niche_analysis install line.
+netgraph
+
+# --- Tutorial 02b needs stlearn's two eager imports -------------------------
+# stlearn is installed with --no-deps (see the header), so nothing comes with it.
+# stlearn/pl/__init__.py imports the bokeh-backed *_interactive plots and
+# stlearn/tl/clustering/leiden.py imports leidenalg, both unconditionally, so
+# `import stlearn` fails without these two.
+bokeh
+leidenalg
+
+# --- fetching Staged datasets ------------------------------------------------
+huggingface_hub
+gdown
+
+# --- image I/O for the Xenium/Atera Crops ------------------------------------
+# tifffile can only read the compressed OME-TIFF pyramids 10x writes if
+# imagecodecs is present, and imagecodecs is an optional extra rather than a
+# hard dependency, so it is requested explicitly.
+tifffile
+imagecodecs
+
+# --- plotting used directly by the Tutorials ---------------------------------
+seaborn
