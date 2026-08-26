@@ -1,0 +1,20 @@
+{
+  "element": "he",
+  "source": "atera_crop.zarr.zip images/he",
+  "coordinate_system": "global",
+  "shape": [
+    1826,
+    1826,
+    3
+  ],
+  "pixel_size_um": 1.0951066954668738,
+  "extent_um": [
+    2999.4972388837673,
+    4999.162064806279,
+    10999.25164926928,
+    8999.586823346768
+  ],
+  "note": "matplotlib extent (x0, x1, y1, y0); y already flipped for imshow",
+  "built_by": "prep/build_he_backdrop.py",
+  "licence": "Data (c) 10x Genomics, used under CC BY 4.0. Derived: spatially subset, image downsampled, JPEG encoded."
+}

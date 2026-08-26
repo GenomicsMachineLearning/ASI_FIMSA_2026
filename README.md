@@ -23,4 +23,5 @@ Click a badge to open that Tutorial in Google Colab. Start with the setup check
 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/GenomicsMachineLearning/ASI_FIMSA_2026/blob/main/notebooks/04_vit_gene_expression.ipynb) | **04 · ViT for gene expression** | Train a small Vision Transformer that predicts gene expression from H&E morphology alone, then look honestly at which genes it gets right and which it does not. | ~30 min |
 
 **Code and teaching material** are [MIT licensed](LICENSE) — reuse, adapt and teach from
-them freely. 
+them freely. **The data** are 10x Genomics datasets under their own terms; sources,
+licences and attribution are in [DATA_LICENCE.md](DATA_LICENCE.md). 
