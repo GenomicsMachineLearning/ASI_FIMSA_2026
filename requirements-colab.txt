@@ -10,7 +10,7 @@
 # notebook's whole job is to prove the full stack resolves in a participant's
 # own Colab session before the Workshop. The three Tutorials each install a
 # subset -- see the install lines listed in constraints-colab.txt -- so that,
-# for example, 03_vit_gene_expression pays for scanpy alone.
+# for example, 04_vit_gene_expression pays for scanpy alone.
 #
 # Every version lives in constraints-colab.txt, including the transitives that
 # actually decide whether this stack works (anndata, zarr 3.x, dask >=2026.3,
@@ -18,10 +18,6 @@
 # The `-c` line below is what binds the two together; without it, pip is free
 # to pick a different resolution and the tested set means nothing.
 #
-# One package is NOT here and cannot be: stlearn, which Tutorial 02b installs with
-# `--no-deps` because its declared `numpy>=2.4.0` collides with the Colab numpy
-# hold. A `-r` install has no way to express --no-deps, so stlearn lives in its own
-# one-line file, requirements-colab-stlearn.txt. See ADR-0004.
 -c constraints-colab.txt
 
 # --- torch is deliberately ABSENT -------------------------------------------
@@ -53,13 +49,11 @@ scanpy
 # in the 02_niche_analysis install line.
 netgraph
 
-# --- Tutorial 02b needs stlearn's two eager imports -------------------------
-# stlearn is installed with --no-deps (see the header), so nothing comes with it.
-# stlearn/pl/__init__.py imports the bokeh-backed *_interactive plots and
-# stlearn/tl/clustering/leiden.py imports leidenalg, both unconditionally, so
-# `import stlearn` fails without these two.
-bokeh
-leidenalg
+# --- Tutorial 3: LIANA+ ------------------------------------------------------
+# liana declares no numpy floor, so it is requested normally and resolved by the
+# constraints file like everything else. Its own dependencies (mudata, plotnine,
+# mizani) come with it and are pinned in constraints-colab.txt.
+liana
 
 # --- fetching Staged datasets ------------------------------------------------
 huggingface_hub

@@ -8,17 +8,16 @@
 # ---------------------
 # This is a pip *constraints* file, not a requirements file. It never installs
 # anything by itself: it only says "if this package is pulled in, it must be
-# exactly this version". Every Tutorial install passes it with `-c`, so all four
+# exactly this version". Every Tutorial install passes it with `-c`, so all five
 # notebooks land on one tested resolution while each installs only what it needs:
 #
 #   00_setup_check        -c constraints-colab.txt -r requirements-colab.txt
 #   01_read_and_visualise -c constraints-colab.txt spatialdata spatialdata-io spatialdata-plot scanpy igraph
 #   02_niche_analysis     -c constraints-colab.txt squidpy sopa scanpy seaborn netgraph
-#   02b_cell_cell_interaction -c constraints-colab.txt scanpy seaborn bokeh leidenalg
-#                             followed by:  --no-deps stlearn   (see below, and ADR-0004)
-#   03_vit_gene_expression -c constraints-colab.txt scanpy
+#   03_cell_cell_interaction_liana -c constraints-colab.txt scanpy seaborn liana
+#   04_vit_gene_expression -c constraints-colab.txt scanpy
 #
-# Tutorial 3 deliberately installs scanpy ONLY. Its ViT runs on torch, PIL,
+# Tutorial 4 deliberately installs scanpy ONLY. Its ViT runs on torch, PIL,
 # scikit-learn and scipy, all of which Colab preinstalls, so it must not pay for
 # the spatialdata stack.
 #
@@ -49,33 +48,6 @@
 # in the workshop stack requires numpy > 2.0.2. The binding floor is
 # `scanpy 1.12.3: numpy>=2`, which 2.0.2 satisfies.
 #
-# stlearn IS INSTALLED WITH --no-deps, AND IS NOT PINNED HERE (ADR-0004)
-# ---------------------------------------------------------------------
-# stlearn 1.4.1 declares `numpy>=2.4.0`. That floor is incompatible with the hold
-# above, and no stlearn release escapes it: 1.3.0 requires numpy<2.0, 1.2.2
-# requires scikit-image<0.23, and 1.1.x pins scipy==1.11.4. Since the numpy hold
-# exists to protect a room of Participants from a mid-Tutorial kernel restart, it
-# wins, and 02b installs stlearn with `--no-deps` instead:
-#
-#   pip install -q -c constraints-colab.txt scanpy seaborn bokeh leidenalg
-#   pip install -q --no-deps stlearn
-#
-# This is safe to do here and nowhere else because stlearn is a 217 KB pure-Python
-# wheel (stlearn-1.4.1-py3-none-any.whl) whose every eagerly-imported third party
-# is already in this pin set except two -- bokeh and leidenalg -- which are
-# therefore requested explicitly above and pinned in Section A below. plotly,
-# rpy2 and IPython are imported inside functions only, and torch/torchvision are
-# needed solely by stlearn.image_preprocessing, which 02b never touches.
-#
-# The cost is real and bounded: `--no-deps` overrides a declared incompatibility,
-# so stlearn is only known to work along the paths 02b actually executes, and
-# those are the paths verify/run_notebooks.sh runs end to end. If a future stlearn
-# genuinely needs a numpy 2.4 API, the documented fallback is a second pin set at
-# numpy==2.5.2 for that notebook alone, plus 00_setup_check's restart banner.
-#
-# DO NOT add `stlearn` to this file. A constraint on a package installed with
-# --no-deps is never consulted, so a pin here would be inert and would read as a
-# guarantee this file cannot make.
 
 # TWO TIERS, ON PURPOSE
 # ---------------------
@@ -180,17 +152,26 @@ typeguard==4.6.0
 pydantic==2.12.5
 pydantic-core==2.41.5
 
-# stlearn's two eager imports that nothing else in the stack provides. Requested
-# explicitly because stlearn itself is installed with --no-deps and so pulls in
-# nothing of its own. bokeh backs stlearn.pl's *_interactive plots, which are
-# imported by stlearn/pl/__init__.py whether or not a Tutorial calls them;
-# leidenalg backs stlearn.tl.clustering.leiden, imported the same way.
-bokeh==3.10.0
-xyzservices==2026.3.0
-narwhals==2.25.0
-tornado==6.5.8
-leidenalg==0.12.0
+# texttable -- a hard dependency of python-igraph, which Tutorial 1 installs for
+# scanpy's `flavor="igraph"` Leiden.
 texttable==1.7.0
+
+# liana -- Tutorial 3. liana declares no numpy floor at all (its install_requires
+# is anndata, docrep, mudata, numba, pandas<3, plotnine, scanpy, session-info2,
+# tqdm), so it resolves against the numpy==2.0.2 hold with nothing switched off.
+# Verified 2026-08-26: `uv pip compile -c constraints-colab.txt scanpy seaborn
+# liana` returns numpy==2.0.2 and pandas==2.3.3, the same resolution the rest of
+# the Workshop already lands on.
+#
+# Only four packages below are genuinely new to this pin set -- liana itself,
+# mudata, and plotnine with its mizani leaf. plotnine is a hard dependency of
+# liana (it backs li.pl.*), not something the Tutorial asks for; every figure is
+# drawn in matplotlib. statsmodels and patsy are plotnine's, and are already
+# satisfied by the existing resolution.
+liana==1.9.0
+mudata==0.4.1
+plotnine==0.15.8
+mizani==0.14.4
 
 # netgraph -- needed by sopa.spatial.prepare_network in Tutorial 2, and NOT a
 # sopa dependency. Installing sopa alone leaves prepare_network unusable, so
@@ -228,5 +209,5 @@ joblib>=1.2            # tested 1.5.3    <-- scanpy
 tqdm>=4.50.2           # tested 4.70.0   <-- squidpy>=4.50.2
 requests>=2.28         # tested 2.34.2   <-- datashader, ome-zarr
 pyarrow>=14            # tested 25.0.1   <-- spatialdata (parquet cell tables)
-imageio>=2.37          # tested 2.37.4   <-- scikit-image, stlearn
-click>=8.2             # tested 8.4.2    <-- typer (sopa), stlearn
+imageio>=2.37          # tested 2.37.4   <-- scikit-image
+click>=8.2             # tested 8.4.2    <-- typer (sopa)
