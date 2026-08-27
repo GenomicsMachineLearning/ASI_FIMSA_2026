@@ -1,72 +1,9 @@
-# ASI-FIMSA Workshop 2026 -- pin set for Google Colab
-# ===================================================
-# Verified 2026-08-25 on Python 3.12.9 (Bunya, venv at
-# /scratch/project_mnt/S0010/Xiao/envs/colab312) against the Colab 2026.07
-# runtime profile: Python 3.12.13, numpy 2.0.2, torch 2.11.0 preinstalled.
-#
-# HOW THIS FILE IS USED
-# ---------------------
-# This is a pip *constraints* file, not a requirements file. It never installs
-# anything by itself: it only says "if this package is pulled in, it must be
-# exactly this version". Every Tutorial install passes it with `-c`, so all five
-# notebooks land on one tested resolution while each installs only what it needs:
-#
-#   00_setup_check        -c constraints-colab.txt -r requirements-colab.txt
-#   01_read_and_visualise -c constraints-colab.txt spatialdata spatialdata-io spatialdata-plot scanpy igraph
-#   02_niche_analysis     -c constraints-colab.txt squidpy sopa scanpy seaborn netgraph
-#   03_cell_cell_interaction_liana -c constraints-colab.txt scanpy seaborn liana
-#   04_vit_gene_expression -c constraints-colab.txt scanpy
-#
-# Tutorial 4 deliberately installs scanpy ONLY. Its ViT runs on torch, PIL,
-# scikit-learn and scipy, all of which Colab preinstalls, so it must not pay for
-# the spatialdata stack.
-#
-# TORCH IS NOT LISTED ANYWHERE IN THIS PIN SET
-# --------------------------------------------
-# Colab preinstalls torch 2.11.0 with a CUDA build matched to its own driver.
-# Naming torch in a requirements or constraints file makes pip re-resolve it and
-# can pull a ~2.5 GB wheel set that then fails to see the GPU. Tutorial 3 uses
-# whatever torch Colab shipped. The local verification venv installs
-# torch==2.11.0+cpu separately, outside this file, only so notebooks can be
-# executed headlessly.
-#
-# THE FOUR SPATIALDATA-FAMILY VERSIONS MOVE TOGETHER (ADR-0003)
-# -------------------------------------------------------------
-# spatialdata / spatialdata-io / spatialdata-plot / squidpy -- plus sopa, which
-# gates on spatialdata>=0.7.3 -- are a single unit. Mixing majors across them is
-# the exact failure this pin set exists to prevent. If one is bumped, re-resolve
-# and re-verify all five together and update the "Verified" date above. Do not
-# bump one in isolation to chase a bug.
-#
-# THE numpy==2.0.2 HOLD IS THE POINT
-# ----------------------------------
-# Colab preinstalls numpy 2.0.2 and imports it before the first cell runs. If any
-# pin forces numpy above 2.0.2, pip swaps the files under a module that is
-# already in memory and Colab demands a mid-session kernel restart -- for a room
-# of immunologists, halfway through a Tutorial. 2.0.2 is therefore pinned
-# exactly, and the whole stack below was resolved against it. It holds: nothing
-# in the workshop stack requires numpy > 2.0.2. The binding floor is
-# `scanpy 1.12.3: numpy>=2`, which 2.0.2 satisfies.
-#
-
-# TWO TIERS, ON PURPOSE
-# ---------------------
-# Section A pins exactly. These are packages Colab does not ship, or ships in a
-# version the stack rejects, so they are installed either way and an exact pin
-# costs nothing.
-# Section B is floors only, with the tested version recorded in a comment. These
-# are packages Colab already ships. Pinning them exactly would force pip to
-# re-download and replace a working preinstalled copy -- minutes of install time
-# and, for anything Colab has already imported, the same stale-module restart
-# that the numpy hold exists to avoid. The floors below are the real declared
-# requirements of the stack, so correctness is unchanged.
-
 # ---------------------------------------------------------------------------
 # Section A -- exact pins (not preinstalled on Colab, or must be replaced)
 # ---------------------------------------------------------------------------
 
 # The numpy hold. Read the note above before touching this line.
-numpy==2.0.2
+# numpy==2.0.2
 
 # The spatialdata family + sopa + scanpy. Bump as one unit (ADR-0003).
 spatialdata==0.8.0
